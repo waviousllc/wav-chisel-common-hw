@@ -1,4 +1,4 @@
-//package wavd2d.diplomacy
+//package wav.common
 package freechips.rocketchip.diplomacy
 
 // Custom Register Nodes

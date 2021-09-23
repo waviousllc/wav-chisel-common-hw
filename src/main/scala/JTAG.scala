@@ -1,4 +1,4 @@
-package wavd2d
+package wav.common
 
 
 import chisel3._
