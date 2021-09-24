@@ -589,3 +589,51 @@ class WlinkDPRAMBB(dataWidth: Int, depth: Int, addrWidth: Int, name: String) ext
     """.stripMargin)
     
 }
+
+
+class WavMultibitSync (dataWidth: Int)(implicit p: Parameters) extends RawModule{
+  val w = IO(new Bundle{
+    val clk     = Input (Clock())
+    val reset   = Input (Reset())
+    val inc     = Input (Bool())
+    val data    = Input (UInt(dataWidth.W))
+    val ready   = Output(Bool())
+  })
+  
+  val r = IO(new Bundle{
+    val clk     = Input (Clock())
+    val reset   = Input (Reset())
+    val inc     = Input (Bool())
+    val data    = Output(UInt(dataWidth.W))
+    val ready   = Output(Bool())
+  })
+  
+  val mem       = withClockAndReset(w.clk, w.reset.asAsyncReset){RegInit(VecInit(Seq.fill(2)(0.U(dataWidth.W)))) }//RegInit(Vec(2, UInt(dataWidth.W)), 0.U)}
+  
+  val wptr_in   = Wire(Bool())
+  val wptr      = withClockAndReset(w.clk, w.reset.asAsyncReset){RegNext(wptr_in, false.B)}
+  val we        = Wire(Bool())
+  
+  
+  val rptr_in   = Wire(Bool())
+  val rptr      = withClockAndReset(r.clk, r.reset.asAsyncReset){RegNext(rptr_in, false.B)}
+  val wptr_rclk = withClockAndReset(r.clk, r.reset.asAsyncReset){WavDemetReset(wptr)}
+  
+  
+  val rptr_wclk = withClockAndReset(w.clk, w.reset.asAsyncReset){WavDemetReset(rptr)}
+  
+  wptr_in     := we ^ wptr
+  w.ready     := ~(rptr_wclk ^ wptr)
+  we          := w.inc & w.ready
+  
+  
+  
+  r.ready     := rptr ^ wptr_rclk
+  rptr_in     := rptr ^ (r.inc & r.ready)
+  r.data      := mem(rptr)
+  
+  when(we){
+    mem(rptr) := w.data
+  }
+  
+}
