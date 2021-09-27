@@ -11,6 +11,9 @@ import freechips.rocketchip.config.{Parameters, Field, Config}
 
 case object WavComponentPrefix extends Field[Option[String]](None)
 
+class WithWavComponentPrefix(s: String) extends Config((site, here, up) => {
+  case WavComponentPrefix => s
+})
 
 /**
   *   Translates a pulse between clock domains.
